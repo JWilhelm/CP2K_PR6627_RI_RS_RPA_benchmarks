@@ -46,8 +46,7 @@ which makes all-electron RPA equations of state unusable. See Secs. 3.2, 3.5 and
 | Table 1, PBE rows | Si PBE, all-electron (pc-4) and GTH (cc-pVQZ) | `si_equation_of_state_gth/pbe_only/` (`Si_all-electron_pc-4_k8x8x8`, `Si_GTH-PBE_cc-pVQZ-GTH-HF-q4_k8x8x8`, `Si_GTH-HF_cc-pVQZ-GTH-HF-q4_k8x8x8`) |
 | Table 1, RPA GTH-PBE rows | Si RPA, cc-pVTZ / cc-pVQZ, k 8x8x8 | `si_equation_of_state_gth/rpa_gth-pbe/Si_GTH-PBE_cc-pV{T,Q}Z-GTH-HF-q4_k8x8x8_RI3.5_RS10` |
 | Table 1, RPA GTH-HF rows | Si RPA with frozen RI-RS grid | `si_equation_of_state_gth/rpa_gth-hf_frozen_grid/` |
-| Fig. 1(a) | parts of the RPA energy of Si vs a | `si_equation_of_state_gth/rpa_gth-pbe/Si_GTH-PBE_cc-pVQZ-GTH-HF-q4_k8x8x8_RI3.5_RS10` |
-| Fig. 1(b) | scan with 21 lattice constants | `si_equation_of_state_gth/rpa_gth-pbe_fine_scan/` |
+| Fig. 1 | Si GTH-HF, PBE and RPA total energy vs a (cc-pVTZ, cc-pVQZ, RI 4 / RS 14) | `si_equation_of_state_gth/rpa_gth-hf_grid_optimised_at_every_a/Si_GTH-HF_cc-pV{T,Q}Z-GTH-HF-q4_k8x8x8_RI4_RS14` |
 | Fig. 2(a, c) | Si GTH-HF, grid optimised at every a | `si_equation_of_state_gth/rpa_gth-hf_grid_optimised_at_every_a/` |
 | Fig. 2(b, d) | Si GTH-HF, grid optimised once at a = 5.41 Å and frozen | `si_equation_of_state_gth/rpa_gth-hf_frozen_grid/` |
 | Sec. 3.3 | frozen grids of different size or from a different a | `si_equation_of_state_gth/rpa_gth-hf_frozen_grid_size_test/`, `si_equation_of_state_gth/rpa_gth-hf_frozen_grid_optimisation_runs/` |
@@ -121,8 +120,8 @@ GaAs with aug-TZVP: the pseudopotential files `POTENTIALS` / `POTENTIALS_SOC`, w
 
 - Wavefunction restart files, CP2K binaries, Slurm scripts and Slurm logs, empty stdout/stderr files, the RI-RS
   grids written by the grid optimiser (`optimized_atom_*_rirs.ion`).
-- LiF cc-pVQZ RI 4 / RS 18: the jobs for a = 3.86, 3.90 and 3.94 Å were still running when this repository was
-  made; only their inputs are included. As stated in the PDF, Fig. 3 uses RI 3 / RS 14 for MgO and LiF.
+- LiF cc-pVQZ RI 4 / RS 18: the runs for a = 3.86 and 3.90 Å did not finish within the 4 h time limit and were
+  restarted; only their inputs are included. As stated in the PDF, Fig. 3 uses RI 3 / RS 14 for LiF.
 - Runs that are superseded or not used in the PDF: frozen-grid runs with a development build that ignored
   `RI_AO_RATIO` (they were repeated, see `rpa_gth-hf_frozen_grid/`; only the grid-size test in
   `rpa_gth-hf_frozen_grid_size_test/` is kept from that build, where the number of RI functions is therefore
@@ -143,5 +142,5 @@ The outputs are included as they are. These series contain outputs without "PROG
 | `si_equation_of_state_gth/rpa_gth-pbe_cc-pVQZ_parameter_scan/Si_GTH-PBE_cc-pVQZ-GTH-HF-q4_k6x6x6_RI8_RS{14,30}` | 0 / 3 each |
 | `si_equation_of_state_gth/rpa_gth-hf_frozen_grid_optimisation_runs/..._RI4_RS30_grid_optimisation` | 0 / 1 (the grid was written) |
 | `si_equation_of_state_gth/rpa_gth-hf_frozen_grid_size_test/..._RI4_RS30_grid_frozen_from_a5.41` | 8 / 9 |
-| `c_sic_bn_mgo_lif_equation_of_state_gth-hf/LiF_GTH-HF_cc-pVQZ-..._RI4_RS18` | 6 / 9 (3 still running, see above) |
+| `c_sic_bn_mgo_lif_equation_of_state_gth-hf/LiF_GTH-HF_cc-pVQZ-..._RI4_RS18` | 7 / 9 (2 not finished, see above) |
 | `dlp_analytic_vs_quadrature/` (most runs) | stopped on purpose after d_lP, see above |

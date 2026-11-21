@@ -4,15 +4,23 @@
 # PBE / RPA ONCV: Pitts, Contant, Hellgren, PRB 112, 085137 (2025), Table II (a0 only; no SiC).
 # RPA PAW: Harl, Schimka, Kresse, PRB 81, 115126 (2010) as quoted in Patrick & Thygesen, JCP 143, 102802 (2015),
 #   Table I; BN (not in Harl): Humer, Schlipf, Kresse, arXiv:2602.14923 (2026), Tables VII/VIII.
+# RPA NC-PAW / std-PAW: Klimes, Kaltak, Maggio, Kresse, JCP 143, 102816 (2015), Table VI (a0 only; no BN).
+# Si: PBE AE Tran & Blaha; ONCV Pitts; RPA PAW Harl via Patrick & Thygesen; exp Tran & Blaha.
 # exp.: zero-point corrected a0 and B0, Tran & Blaha Table III (MgO a0 Pitts Table II, B0 165 GPa not ZPC).
 REF = {
     "C":   {"PBE AE": (3.575, 435), "PBE ONCV": (3.567, None), "RPA ONCV": (3.567, None),
-            "RPA PAW": (3.572, 441), "exp.": (3.553, 455)},
-    "SiC": {"PBE AE": (4.384, 213), "RPA PAW": (4.365, 223), "exp.": (4.346, 229)},
+            "RPA PAW": (3.572, 441), "RPA NC-PAW": (3.562, None), "RPA std-PAW": (3.571, None),
+            "exp.": (3.553, 455)},
+    "SiC": {"PBE AE": (4.384, 213), "RPA PAW": (4.365, 223), "RPA NC-PAW": (4.353, None), "RPA std-PAW": (4.367, None),
+            "exp.": (4.346, 229)},
     "BN":  {"PBE AE": (3.628, 374), "PBE ONCV": (3.621, None), "RPA ONCV": (3.617, None),
             "RPA PAW": (3.621, 378), "exp.": (3.592, 410)},
     "MgO": {"PBE AE": (4.254, 149.0), "PBE ONCV": (4.255, None), "RPA ONCV": (4.200, None),
-            "RPA PAW": (4.225, 168), "exp.": (4.189, 165)},
+            "RPA PAW": (4.225, 168), "RPA NC-PAW": (4.200, None), "RPA std-PAW": (4.217, None),
+            "exp.": (4.189, 165)},
     "LiF": {"PBE AE": (4.069, 67.2), "PBE ONCV": (4.062, None), "RPA ONCV": (3.996, None),
-            "RPA PAW": (3.998, 76), "exp.": (3.972, 76.3)},
+            "RPA PAW": (3.998, 76), "RPA NC-PAW": (3.994, None), "RPA std-PAW": (3.993, None),
+            "exp.": (3.972, 76.3)},
+    "Si":  {"PBE AE": (5.476, 89.0), "PBE ONCV": (5.479, None), "RPA ONCV": (5.414, None), "RPA PAW": (5.432, 99),
+            "RPA NC-PAW": (5.428, None), "RPA std-PAW": (5.438, None), "exp.": (5.421, 101)},
 }

@@ -10,6 +10,7 @@ fig_gw_gaps.pdf         all-electron G0W0 gaps of diamond and silicon
 Run with a Python that has numpy and matplotlib. Reads the fits and data in data/."""
 import json
 import os
+import re
 import sys
 
 import matplotlib
@@ -38,36 +39,54 @@ def panel_label(ax, letter):
             bbox=dict(facecolor="white", edgecolor="none", pad=1))
 
 
+def si_gthhf_series(basis, ri=4, rs=14):
+    """a (Angstrom) and E_DFT, E_xc, E_EXX, E_c (Hartree) of the Si GTH-HF runs, k mesh 8x8x8"""
+    rows = []
+    for line in open(f"{RES}/si_gthhf_eos/data.txt"):
+        w = line.split()
+        m = re.fullmatch(rf"si_hf_{basis}_k8_ri{ri}_rs{rs}_a(5\.\d+)", w[0])
+        if m:
+            rows.append([float(m.group(1))] + [float(x) for x in w[1:5]])
+    return dict(zip(("a", "E_DFT", "E_xc", "E_EXX", "E_c"), np.array(sorted(rows)).T))
+
+
 def si_parts_noise():
-    data = json.load(open(f"{RES}/si_eos_overview/eos_data.json"))["rpa"]
-    q, fine = data["tight_QZ"], data["fine_TZ"]
-    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.6))
-    fig.subplots_adjust(left=0.10, right=0.99, bottom=0.18, top=0.82, wspace=0.40)
-    parts = (("PBE total energy", GREY, "o", lambda s: np.array(s["E_DFT"])),
-             ("Hartree-Fock energy", BLUE, "s", lambda s: np.array(s["E_DFT"]) - np.array(s["E_xc"]) + np.array(s["E_EXX"])),
-             ("RPA correlation energy", ORANGE, "^", lambda s: np.array(s["E_c"])))
-    a = np.array(q["a"])
-    i0 = list(a).index(5.46)
-    for lab, col, m, energy in parts:
-        v = energy(q)
-        axes[0].plot(a * 100, (v - v[i0]) * HA_EV * 1000, m + "-", color=col, ms=4, label=lab)
-    v = parts[1][3](q) + parts[2][3](q)
-    axes[0].plot(a * 100, (v - v[i0]) * HA_EV * 1000, "D-", color=GREEN, ms=4, label="RPA total energy")
-    axes[0].set_ylabel(r"$E(a)-E(546\,\mathrm{pm})$ (meV)")
-    axes[0].set_xlabel(r"lattice constant $a$ (pm)")
-    axes[0].xaxis.set_major_locator(MultipleLocator(10))
-    af = np.array(fine["a"])
-    x = (af ** 3 / 4) ** (-2 / 3)
-    for lab, col, m, energy in parts:
-        e = energy(fine) * HA_EV
-        axes[1].plot(af * 100, (e - np.polyval(np.polyfit(x, e, 3), x)) * 1e3, m + "-", color=col, ms=4, lw=1.0)
-    axes[1].set_ylabel("deviation from smooth fit (meV)")
-    axes[1].set_xlabel(r"lattice constant $a$ (pm)")
-    axes[1].xaxis.set_major_locator(MultipleLocator(2))
-    axes[1].yaxis.set_major_locator(MultipleLocator(1))
-    panel_label(axes[0], "a")
-    panel_label(axes[1], "b")
-    fig.legend(*axes[0].get_legend_handles_labels(), loc="upper center", ncol=4, **LEG)
+    t, q = si_gthhf_series("T"), si_gthhf_series("Q")
+    a = q["a"]
+    x = (a ** 3 / 4) ** (-2 / 3)
+    hf = {b: s["E_DFT"] - s["E_xc"] + s["E_EXX"] for b, s in (("T", t), ("Q", q))}
+    rpa = {"T": hf["T"] + t["E_c"], "Q": hf["Q"] + q["E_c"],
+           "X": hf["Q"] + (4 ** 3 * q["E_c"] - 3 ** 3 * t["E_c"]) / (4 ** 3 - 3 ** 3)}
+    pbe = {"T": t["E_DFT"], "Q": q["E_DFT"]}
+    fig, axes = plt.subplots(1, 3, figsize=(WIDTH, 2.5))
+    fig.subplots_adjust(left=0.085, right=0.995, bottom=0.18, top=0.83, wspace=0.44)
+    a_fine = np.linspace(a[0], a[-1], 200)
+    x_fine = (a_fine ** 3 / 4) ** (-2 / 3)
+    for ax, energies in ((axes[0], pbe), (axes[1], rpa)):
+        for b, e in energies.items():
+            m, col, lab = BASIS_STYLE[b]
+            fit = np.polyfit(x, e * HA_EV * 1e3, 3)
+            e_min = np.polyval(fit, x_fine).min()
+            ax.plot(a_fine * 100, np.polyval(fit, x_fine) - e_min, "-", color=col, lw=1.0)
+            ax.plot(a * 100, e * HA_EV * 1e3 - e_min, m, color=col, ms=4, label=lab)
+        ax.set_xlabel(r"lattice constant $a$ (pm)")
+        ax.xaxis.set_major_locator(MultipleLocator(10))
+        ax.yaxis.set_major_locator(MaxNLocator(5, integer=True))
+    axes[0].set_ylabel(r"$E(a)-E_\mathrm{min}$ (meV)")
+    parts = (("PBE", GREY, "o", q["E_DFT"]), ("Hartree-Fock", BLUE, "s", hf["Q"]), (r"$E_\mathrm{c}^\mathrm{RPA}$", ORANGE, "^", q["E_c"]))
+    for lab, col, m, e in parts:
+        e = e * HA_EV * 1e6
+        axes[2].plot(a * 100, e - np.polyval(np.polyfit(x, e, 3), x), m + "-", color=col, ms=4, lw=1.0, label=lab)
+    axes[2].set_xlabel(r"lattice constant $a$ (pm)")
+    axes[2].set_ylabel(r"deviation from fit ($\mu$eV)")
+    axes[2].xaxis.set_major_locator(MultipleLocator(10))
+    for ax, letter in zip(axes, "abc"):
+        low, high = ax.get_ylim()
+        ax.set_ylim(low, high + 0.16 * (high - low))
+        panel_label(ax, letter)
+    handles, labels = axes[1].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.33, 1.0), ncol=3, **LEG)
+    fig.legend(*axes[2].get_legend_handles_labels(), loc="upper right", bbox_to_anchor=(0.995, 1.0), ncol=3, columnspacing=0.8, handletextpad=0.3, **LEG)
     fig.savefig(f"{HERE}/fig_si_parts_noise.pdf")
     plt.close(fig)
 
