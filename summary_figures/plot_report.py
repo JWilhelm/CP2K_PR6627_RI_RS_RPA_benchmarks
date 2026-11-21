@@ -143,10 +143,7 @@ def materials():
     names = {"c": "C", "sic": "SiC", "bn": "BN", "mgo": "MgO", "lif": "LiF"}
 
     def best(mat, method):
-        for basis in (("X", "Q") if method == "RPA" else ("Q",)):
-            for ri, rs in ((4, 18), (3, 14)):
-                if (mat, basis, ri, rs, method) in fits:
-                    return fits[(mat, basis, ri, rs, method)]
+        return fits[(mat, "Q", 4, 18, method)]
 
     fig, axs = plt.subplots(1, 2, figsize=(WIDTH, 2.7))
     fig.subplots_adjust(left=0.09, right=0.99, bottom=0.11, top=0.83, wspace=0.28)
