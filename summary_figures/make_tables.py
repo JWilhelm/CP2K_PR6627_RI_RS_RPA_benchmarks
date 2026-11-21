@@ -20,6 +20,7 @@ RPA_PAW = {"Si": (5.432, 99), "C": (3.572, 441), "SiC": (4.365, 223), "BN": (3.6
            "LiF": (3.998, 76)}
 RPA_NCPAW = {"Si": (5.428, None), "C": (3.562, None), "SiC": (4.353, None), "MgO": (4.200, None), "LiF": (3.994, None)}
 RPA_STDPAW = {"Si": (5.438, None), "C": (3.571, None), "SiC": (4.367, None), "MgO": (4.217, None), "LiF": (3.993, None)}
+REFERENCES = ("Tran2011", "Bosoni2024", "Pitts2025", "Harl2010", "Humer2026", "Klimes2015")  # numbering in tables.md
 RPA_ONCV = {"Si": (5.414, None), "C": (3.567, None), "BN": (3.617, None), "MgO": (4.200, None), "LiF": (3.996, None)}
 
 
@@ -42,38 +43,35 @@ def cp2k_values():
     return pbe, rpa
 
 
-def row(values, column, mark=None):
-    """formatted entries of the six solids and the MAE with respect to experiment (number of solids if not six)"""
+def row(values, column):
+    """formatted entries of the six solids and the MAE with respect to experiment over the available solids"""
     fmt = "{:.3f}" if column == 0 else "{:.0f}"
     cells, errors = [], []
     for s in SOLIDS:
         v = values.get(s, (None, None))[column]
-        if v is None:
-            cells.append(None)
-        else:
-            cells.append(fmt.format(v) + (mark if mark and s == "LiF" else ""))
+        cells.append(None if v is None else fmt.format(v))
+        if v is not None:
             errors.append(abs(v - EXP[s][column]))
-    mae = sum(errors) / len(errors) if errors else None
-    return cells, mae, len(errors)
+    return cells, (sum(errors) / len(errors) if errors else None)
 
 
 def tables():
     pbe, rpa = cp2k_values()
-    star = "*"
-    pbe_rows = (("CP2K, GTH-PBE, cc-pVQZ", pbe, None), ("all-electron (WIEN2k)", PBE_AE, None),
-                ("plane waves, PAW", PBE_PAW, None), ("plane waves, ONCV", PBE_ONCV, None))
-    rpa_rows = (("CP2K, GTH-HF, cc-pVQZ", rpa, star), ("plane waves, PAW", RPA_PAW, None),
-                ("plane waves, norm-conserving PAW", RPA_NCPAW, None), ("plane waves, standard PAW", RPA_STDPAW, None),
-                ("plane waves, ONCV", RPA_ONCV, None))
+    # (row label, values, citation keys); REFERENCES gives the reference numbers of the markdown tables
+    pbe_rows = (("CP2K, GTH-PBE, cc-pVQZ", pbe, ()), ("all-electron (WIEN2k)", PBE_AE, ("Tran2011", "Bosoni2024")),
+                ("plane waves, PAW", PBE_PAW, ("Tran2011",)), ("plane waves, ONCV", PBE_ONCV, ("Pitts2025",)))
+    rpa_rows = (("CP2K, GTH-HF, cc-pVQZ", rpa, ()), ("plane waves, PAW", RPA_PAW, ("Harl2010", "Humer2026")),
+                ("plane waves, norm-conserving PAW", RPA_NCPAW, ("Klimes2015",)),
+                ("plane waves, standard PAW", RPA_STDPAW, ("Klimes2015",)), ("plane waves, ONCV", RPA_ONCV, ("Pitts2025",)))
     out = []
     for method, rows in (("PBE", pbe_rows), ("RPA", rpa_rows)):
         for column, quantity in ((0, "lattice constant"), (1, "bulk modulus")):
             lines = []
-            for label, values, mark in rows:
-                cells, mae, n = row(values, column, mark)
-                if n:
-                    lines.append((label, cells, mae, n))
-            lines.append(("experiment", row(EXP, column)[0], None, 6))
+            for label, values, keys in rows:
+                cells, mae = row(values, column)
+                if mae is not None:
+                    lines.append((label, cells, mae, keys))
+            lines.append(("experiment", row(EXP, column)[0], None, ("Tran2011", "Harl2010")))
             out.append((method, quantity, column, lines))
     return out
 
@@ -81,42 +79,39 @@ def tables():
 def write_tex(all_tables, captions):
     with open(f"{HERE}/tables.tex", "w") as f:
         for (method, quantity, column, lines), (label, caption) in zip(all_tables, captions):
-            f.write("\\begin{table}[tb]\n\\centering\\small\n\\caption{" + caption + "}\n\\label{" + label + "}\n")
+            f.write("\\begin{table}[!htb]\n\\centering\\small\n\\caption{" + caption + "}\n\\label{" + label + "}\n")
             f.write("\\begin{tabular}{lccccccc}\n\\toprule\n & " + " & ".join(SOLIDS) + " & MAE\\\\\n\\midrule\n")
-            for i, (name, cells, mae, n) in enumerate(lines):
+            for i, (name, cells, mae, keys) in enumerate(lines):
                 if name == "experiment" or i == 1:
                     f.write("\\midrule\n")
-                cells = ["--" if c is None else c.replace("*", "$^*$") for c in cells]
-                if mae is None:
-                    m = ""
-                else:
-                    m = (f"{1000 * mae:.0f}~m\\AA" if column == 0 else f"{mae:.0f}") + (f"\\ ({n})" if n < 6 else "")
-                f.write(f"{name} & " + " & ".join(cells) + f" & {m}\\\\\n")
+                cells = ["--" if c is None else c for c in cells]
+                m = "" if mae is None else (f"{1000 * mae:.0f}" if column == 0 else f"{mae:.0f}")
+                cite = "~\\cite{" + ",".join(keys) + "}" if keys else ""
+                f.write(f"{name}{cite} & " + " & ".join(cells) + f" & {m}\\\\\n")
             f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n\n")
 
 
 def write_markdown(all_tables):
     with open(f"{HERE}/tables.md", "w") as f:
         for method, quantity, column, lines in all_tables:
-            unit = "Å" if column == 0 else "GPa"
-            f.write(f"{method} {quantity} ({unit}); MAE = mean absolute error with respect to experiment"
-                    + (" (mÅ)" if column == 0 else "") + ":\n\n")
+            f.write(f"**{method} {quantity} ({'Å' if column == 0 else 'GPa'})**, MAE vs. experiment"
+                    + (" in mÅ" if column == 0 else "") + "\n\n")
             f.write("| | " + " | ".join(SOLIDS) + " | MAE |\n|---|" + "---|" * 7 + "\n")
-            for i, (name, cells, mae, n) in enumerate(lines):
+            for i, (name, cells, mae, keys) in enumerate(lines):
                 bold = "**" if i == 0 else ""
-                cells = ["–" if c is None else bold + c.replace("*", "") + bold + ("\\*" if "*" in c else "") for c in cells]
-                m = "" if mae is None else bold + (f"{1000 * mae:.0f}" if column == 0 else f"{mae:.0f}") + bold + (f" ({n})" if n < 6 else "")
-                f.write(f"| {bold}{name}{bold} | " + " | ".join(cells) + f" | {m} |\n")
+                cells = ["–" if c is None else bold + c + bold for c in cells]
+                m = "" if mae is None else bold + (f"{1000 * mae:.0f}" if column == 0 else f"{mae:.0f}") + bold
+                cite = " [" + ", ".join(str(REFERENCES.index(k) + 1) for k in keys) + "]" if keys else ""
+                f.write(f"| {bold}{name}{bold}{cite} | " + " | ".join(cells) + f" | {m} |\n")
             f.write("\n")
 
 
 if __name__ == "__main__":
-    captions = (("tab:pbe_a0", "PBE lattice constant $a_0$ (\\AA). MAE: mean absolute error with respect to experiment; "
-                 "a number in parentheses is the number of solids if not all six are available."),
-                ("tab:pbe_b0", "PBE bulk modulus $B_0$ (GPa)."),
-                ("tab:rpa_a0", "RPA lattice constant $a_0$ (\\AA). $^*$Fit to seven lattice constants "
-                 "(3.94--4.18~\\AA); the calculations at 3.86 and 3.90~\\AA\\ were not finished."),
-                ("tab:rpa_b0", "RPA bulk modulus $B_0$ (GPa)."))
+    captions = (("tab:pbe_a0", "PBE lattice constant $a_0$ (\\AA) and its mean absolute error (MAE, in m\\AA) with "
+                 "respect to experiment."),
+                ("tab:pbe_b0", "PBE bulk modulus $B_0$ (GPa) and its MAE with respect to experiment."),
+                ("tab:rpa_a0", "RPA lattice constant $a_0$ (\\AA) and its MAE (m\\AA) with respect to experiment."),
+                ("tab:rpa_b0", "RPA bulk modulus $B_0$ (GPa) and its MAE with respect to experiment."))
     all_tables = tables()
     write_tex(all_tables, captions)
     write_markdown(all_tables)
