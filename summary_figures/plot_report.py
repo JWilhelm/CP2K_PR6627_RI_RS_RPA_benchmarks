@@ -102,7 +102,7 @@ def si_grid():
         optimised[(key[0], int(key[1]), int(key[2]))] = (float(opt[0]), float(opt[1]))
     settings = [(3, 14), (4, 14), (5, 14), (3, 20), (4, 20), (5, 20)]
     x = np.arange(len(settings))
-    fig, axs = plt.subplots(2, 2, figsize=(WIDTH, 4.0), sharex=True, sharey="row")
+    fig, axs = plt.subplots(2, 2, figsize=(WIDTH, 3.6), sharex=True, sharey="row")
     fig.subplots_adjust(left=0.09, right=0.99, bottom=0.10, top=0.86, wspace=0.09, hspace=0.10)
     for col, (fits, title) in enumerate(((optimised, r"RI-RS grid optimised at every $a$"),
                                          (frozen, r"RI-RS grid optimised once and frozen"))):
@@ -142,6 +142,11 @@ def materials():
         fits[(mat, basis, int(ri), int(rs), method)] = [float(v) for v in val.split()]
     names = {"c": "C", "sic": "SiC", "bn": "BN", "mgo": "MgO", "lif": "LiF"}
 
+    for line in open(f"{RES}/pbe_gthpbe_c_sic_bn_mgo_lif/fits.txt"):  # PBE with the GTH-PBE pseudopotential
+        if not line.startswith("#"):
+            mat, val = line.split("|")
+            fits[(mat.strip(), "Q", 4, 18, "PBE")] = [float(v) for v in val.split()]
+
     def best(mat, method):
         return fits[(mat, "Q", 4, 18, method)]
 
@@ -178,7 +183,7 @@ def ae_rpa_noise():
               ("exx_opt", r"$E^\mathrm{EXX}$, grid optimised at every $a$", 200, 100),
               ("ec_tab", r"$E_\mathrm{c}^\mathrm{RPA}$, tabulated grid", 4, 2),
               ("ec_opt", r"$E_\mathrm{c}^\mathrm{RPA}$, grid optimised at every $a$", 60, 30))
-    fig, axs = plt.subplots(2, 2, figsize=(WIDTH, 4.3), sharex=True)
+    fig, axs = plt.subplots(2, 2, figsize=(WIDTH, 3.8), sharex=True)
     fig.subplots_adjust(left=0.10, right=0.99, bottom=0.11, top=0.87, wspace=0.22, hspace=0.25)
     for ax, (key, title, ymax, step), letter in zip(axs.flat, panels, "abcd"):
         for b, name, m, c in bases:
@@ -208,7 +213,7 @@ def dlp_time():
              ("AlAs, aug-TZVP", 125, 25, "quadrature", ""), ("WS$_2$, aug-TZVP", 94, 75, "analytic", ""),
              ("Si, aug-TZVP", 529, 164, "quadrature", ""), ("TiO$_2$, aug-DZVP", 2000, 924, "quadrature", "analytic"),
              ("Si, pc-2 (AE)", 43.5, 1e10, "analytic", "quadrature"), ("C, pc-2 (AE)", 98.2, 7e6, "analytic", "quadrature"))
-    fig, ax = plt.subplots(figsize=(WIDTH, 3.4))
+    fig, ax = plt.subplots(figsize=(WIDTH, 3.1))
     fig.subplots_adjust(left=0.20, right=0.98, bottom=0.14, top=0.85)
     for i, (name, t_analytic, t_quadrature, choice, estimate) in enumerate(cases):
         c = BLUE if choice == "analytic" else ORANGE
@@ -239,7 +244,7 @@ def gw_gaps():
                               ("FHI-aims, all-electron", 5.69, "--"), ("VASP, PAW", 5.72, ":")),
                   "silicon": (("CP2K, GTH pseudopotential", 1.166, "-"), ("FHI-aims, all-electron", 1.13, "--"),
                               ("FHI-aims, all-electron", 1.12, "--"), ("VASP, PAW", 1.30, ":"))}
-    fig, axs = plt.subplots(1, 2, figsize=(WIDTH, 3.0), gridspec_kw={"width_ratios": [6, 8]})
+    fig, axs = plt.subplots(1, 2, figsize=(WIDTH, 2.7), gridspec_kw={"width_ratios": [6, 8]})
     fig.subplots_adjust(left=0.09, right=0.99, bottom=0.20, top=0.80, wspace=0.18)
     for ax, data, name, letter in ((axs[0], diamond, "diamond", "a"), (axs[1], silicon, "silicon", "b")):
         x = np.arange(len(data))

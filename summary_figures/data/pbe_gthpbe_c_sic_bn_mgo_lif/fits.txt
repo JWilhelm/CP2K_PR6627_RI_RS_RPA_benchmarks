@@ -1,0 +1,6 @@
+# material | PBE GTH-PBE cc-pVQZ: a0 (A) B0 (GPa) fit rms (meV per cell) number of lattice constants
+bn   | 3.6293  369.1   0.05 9
+c    | 3.5727  430.4   0.01 9
+lif  | 4.0719   67.8   0.05 9
+mgo  | 4.2604  148.1   0.06 9
+sic  | 4.3712  210.8   0.03 9

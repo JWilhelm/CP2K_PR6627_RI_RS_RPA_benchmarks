@@ -43,9 +43,12 @@ which makes all-electron RPA equations of state unusable. See Secs. 3.2, 3.5 and
 
 | PDF | Content | Folder |
 |---|---|---|
-| Tables 1–3, Si column | Si PBE and RPA with GTH-HF, cc-pVQZ, RI 4 / RS 20, grid optimised at every a | `si_equation_of_state_gth/rpa_gth-hf_grid_optimised_at_every_a/Si_GTH-HF_cc-pVQZ-GTH-HF-q4_k8x8x8_RI4_RS20` |
-| Tables 1–3, other columns | C, SiC, BN, MgO, LiF with GTH-HF, cc-pVQZ, RI 4 / RS 18 | `c_sic_bn_mgo_lif_equation_of_state_gth-hf/*_cc-pVQZ-*_RI4_RS18` |
-| Sec. 3.1, text | Si PBE all-electron (pc-4) and GTH-PBE; Si RPA with GTH-PBE | `si_equation_of_state_gth/pbe_only/`, `si_equation_of_state_gth/rpa_gth-pbe/` |
+| Tables 1–2 (PBE), Si | Si PBE with GTH-PBE, cc-pVQZ | `si_equation_of_state_gth/pbe_only/Si_GTH-PBE_cc-pVQZ-GTH-HF-q4_k8x8x8` |
+| Tables 1–2 (PBE), other solids; Fig. 3 (PBE) | C, SiC, BN, MgO, LiF PBE with GTH-PBE, cc-pVQZ (basis sets `cc-pVQZ-GTH-HF-q*`) | `c_sic_bn_mgo_lif_pbe_gth-pbe/` |
+| Tables 3–4 (RPA), Si | Si RPA with GTH-HF, cc-pVQZ, RI 4 / RS 20, grid optimised at every a | `si_equation_of_state_gth/rpa_gth-hf_grid_optimised_at_every_a/Si_GTH-HF_cc-pVQZ-GTH-HF-q4_k8x8x8_RI4_RS20` |
+| Tables 3–4 (RPA), other solids; Fig. 3 (RPA) | C, SiC, BN, MgO, LiF RPA with GTH-HF, cc-pVQZ, RI 4 / RS 18 | `c_sic_bn_mgo_lif_equation_of_state_gth-hf/*_cc-pVQZ-*_RI4_RS18` |
+| Sec. 3.1, text | Si PBE all-electron (pc-4); Si RPA with GTH-PBE | `si_equation_of_state_gth/pbe_only/`, `si_equation_of_state_gth/rpa_gth-pbe/` |
+| Tables 1–4 | script that writes the tables from the fits and the reference values | `summary_figures/make_tables.py` |
 | Fig. 1 | Si GTH-HF, PBE and RPA total energy vs a (cc-pVTZ, cc-pVQZ, RI 4 / RS 14) | `si_equation_of_state_gth/rpa_gth-hf_grid_optimised_at_every_a/Si_GTH-HF_cc-pV{T,Q}Z-GTH-HF-q4_k8x8x8_RI4_RS14` |
 | Fig. 2(a, c) | Si GTH-HF, grid optimised at every a | `si_equation_of_state_gth/rpa_gth-hf_grid_optimised_at_every_a/` |
 | Fig. 2(b, d) | Si GTH-HF, grid optimised once at a = 5.41 Å and frozen | `si_equation_of_state_gth/rpa_gth-hf_frozen_grid/` |
