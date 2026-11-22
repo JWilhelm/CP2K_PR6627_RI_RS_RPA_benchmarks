@@ -1,12 +1,17 @@
 """Tables of pr_results_summary.tex: PBE and RPA lattice constants and bulk moduli of Si, C, SiC, BN, MgO, LiF
 with the mean absolute error (MAE) with respect to experiment. Writes tables.tex and tables.md.
 
-CP2K values: cc-pVQZ, k mesh 8x8x8; PBE with GTH-PBE, RPA with GTH-HF, RI 4, RS 18 (Si: RS 20)."""
+CP2K values: cc-pVQZ, k mesh 8x8x8; PBE with GTH-PBE, RPA with GTH-HF, RI 4, RS 18 (Si: RS 20).
+The RPA tables have a second LiF column with an AE (all-electron) Li atom (0046, series liae); the MAE of the CP2K row
+uses it, and the LiF value with Li GTH-HF-q3 is put in parentheses."""
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 RES = os.path.dirname(HERE)
 SOLIDS = ("Si", "C", "SiC", "BN", "MgO", "LiF")
+LIF_LI_AE = "LiF ae"
+LIF_LI_AE_NOTE = ("ae: Li all-electron (GAPW, def2-QZVP basis without its two most diffuse primitives) instead of "
+                  "Li GTH-HF-q3; used in the MAE.")
 KEY = {"C": "c", "SiC": "sic", "BN": "bn", "MgO": "mgo", "LiF": "lif"}
 
 # reference values, (a0 in A, B0 in GPa)
@@ -41,18 +46,28 @@ def cp2k_values():
             rpa["Si"] = (float(w[0]), float(w[1]))
     pbe = {s: pbe[KEY.get(s, s)] for s in SOLIDS}
     rpa = {s: rpa[KEY.get(s, s)] for s in SOLIDS}
+    for line in open(f"{RES}/0046_lif_bulk_modulus/fits_tests.txt"):
+        if line.startswith("liae"):
+            w = line.split("|")[3].split()
+            rpa[LIF_LI_AE] = (float(w[0]), float(w[1]))
     return pbe, rpa
 
 
-def row(values, column):
-    """formatted entries of the six solids and the MAE with respect to experiment over the available solids"""
+def row(values, column, second_lif_column=False):
+    """formatted entries of the six solids and the MAE with respect to experiment over the available solids;
+    second_lif_column: one more cell for LiF with all-electron Li, which replaces LiF in the MAE where it exists"""
     fmt = "{:.3f}" if column == 0 else "{:.0f}"
     cells, errors = [], []
     for s in SOLIDS:
         v = values.get(s, (None, None))[column]
-        cells.append(None if v is None else fmt.format(v))
+        replaced = s == "LiF" and LIF_LI_AE in values
+        cells.append(None if v is None else ("(" + fmt.format(v) + ")" if replaced else fmt.format(v)))
+        if replaced:
+            v = values[LIF_LI_AE][column]
         if v is not None:
             errors.append(abs(v - EXP[s][column]))
+    if second_lif_column:
+        cells.append(fmt.format(values[LIF_LI_AE][column]) if LIF_LI_AE in values else None)
     return cells, (sum(errors) / len(errors) if errors else None)
 
 
@@ -62,7 +77,7 @@ def tables():
     pbe_rows = (("CP2K, GTH-PBE, cc-pVQZ", pbe, ()), ("all-electron (WIEN2k)", PBE_AE, ("Tran2011", "Bosoni2024")),
                 ("plane waves, PAW", PBE_PAW, ("Tran2011",)), ("plane waves, ONCV", PBE_ONCV, ("Pitts2025",)))
     rpa_rows = (("CP2K, GTH-HF, cc-pVQZ", rpa, ()), ("plane waves, PAW", RPA_PAW, ("Harl2010", "Humer2026")),
-                ("plane waves, norm-conserving PAW", RPA_NCPAW, ("Klimes2015",)),
+                ("plane waves, norm-cons. PAW", RPA_NCPAW, ("Klimes2015",)),
                 ("plane waves, standard PAW", RPA_STDPAW, ("Klimes2015",)), ("plane waves, ONCV", RPA_ONCV, ("Pitts2025",)),
                 ("plane waves, PAW (GPAW)", RPA_GPAW, ("Patrick2015",)))
     out = []
@@ -70,10 +85,10 @@ def tables():
         for column, quantity in ((0, "lattice constant"), (1, "bulk modulus")):
             lines = []
             for label, values, keys in rows:
-                cells, mae = row(values, column)
+                cells, mae = row(values, column, method == "RPA")
                 if mae is not None:
                     lines.append((label, cells, mae, keys))
-            lines.append(("experiment", row(EXP, column)[0], None, ("Tran2011", "Harl2010")))
+            lines.append(("experiment", row(EXP, column, method == "RPA")[0], None, ("Tran2011", "Harl2010")))
             out.append((method, quantity, column, lines))
     return out
 
@@ -82,7 +97,9 @@ def write_tex(all_tables, captions):
     with open(f"{HERE}/tables.tex", "w") as f:
         for (method, quantity, column, lines), (label, caption) in zip(all_tables, captions):
             f.write("\\begin{table}[!htb]\n\\centering\\small\n\\caption{" + caption + "}\n\\label{" + label + "}\n")
-            f.write("\\begin{tabular}{lccccccc}\n\\toprule\n & " + " & ".join(SOLIDS) + " & MAE\\\\\n\\midrule\n")
+            columns = SOLIDS + (("LiF ae$^*$",) if method == "RPA" else ())
+            f.write("\\begin{tabular}{l" + "c" * (len(columns) + 1) + "}\n\\toprule\n & " + " & ".join(columns)
+                    + " & MAE\\\\\n\\midrule\n")
             for i, (name, cells, mae, keys) in enumerate(lines):
                 if name == "experiment" or i == 1:
                     f.write("\\midrule\n")
@@ -90,7 +107,10 @@ def write_tex(all_tables, captions):
                 m = "" if mae is None else (f"{1000 * mae:.0f}" if column == 0 else f"{mae:.0f}")
                 cite = "~\\cite{" + ",".join(keys) + "}" if keys else ""
                 f.write(f"{name}{cite} & " + " & ".join(cells) + f" & {m}\\\\\n")
-            f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n\n")
+            f.write("\\bottomrule\n\\end{tabular}\n")
+            if method == "RPA" and column == 1:  # the note stands once, below the bulk modulus table
+                f.write("\\\\[2pt]\\parbox{\\textwidth}{\\footnotesize $^*$ " + LIF_LI_AE_NOTE + "}\n")
+            f.write("\\end{table}\n\n")
 
 
 def write_markdown(all_tables):
@@ -98,7 +118,8 @@ def write_markdown(all_tables):
         for method, quantity, column, lines in all_tables:
             f.write(f"**{method} {quantity} ({'Å' if column == 0 else 'GPa'})**, MAE vs. experiment"
                     + (" in mÅ" if column == 0 else "") + "\n\n")
-            f.write("| | " + " | ".join(SOLIDS) + " | MAE |\n|---|" + "---|" * 7 + "\n")
+            columns = SOLIDS + ((LIF_LI_AE + "*",) if method == "RPA" else ())
+            f.write("| | " + " | ".join(columns) + " | MAE |\n|---|" + "---|" * (len(columns) + 1) + "\n")
             for i, (name, cells, mae, keys) in enumerate(lines):
                 bold = "**" if i == 0 else ""
                 cells = ["–" if c is None else bold + c + bold for c in cells]
@@ -106,6 +127,8 @@ def write_markdown(all_tables):
                 cite = " [" + ", ".join(str(REFERENCES.index(k) + 1) for k in keys) + "]" if keys else ""
                 f.write(f"| {bold}{name}{bold}{cite} | " + " | ".join(cells) + f" | {m} |\n")
             f.write("\n")
+            if method == "RPA":
+                f.write("\\* " + LIF_LI_AE_NOTE + "\n\n")
 
 
 if __name__ == "__main__":

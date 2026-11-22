@@ -1,0 +1,5 @@
+# LiF, RPA with all-electron Li (GAPW, def2-QZVP without its two most diffuse primitives), F GTH-HF-q7 cc-pVQZ, k 8x8x8, RI 4 / RS 18
+# third-order Birch-Murnaghan fits, 9 lattice constants 3.84-4.16 A: a0 (A), B0 (GPa), fit rms (meV per cell)
+PBE    | 4.0684  66.8 0.09 
+HF@PBE | 3.9996  79.8 0.82 
+RPA    | 3.9914  77.6 0.94 
