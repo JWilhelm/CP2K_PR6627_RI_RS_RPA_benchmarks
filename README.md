@@ -123,8 +123,6 @@ GaAs with aug-TZVP: the pseudopotential files `POTENTIALS` / `POTENTIALS_SOC`, w
 
 - Wavefunction restart files, CP2K binaries, Slurm scripts and Slurm logs, empty stdout/stderr files, the RI-RS
   grids written by the grid optimiser (`optimized_atom_*_rirs.ion`).
-- LiF cc-pVQZ RI 4 / RS 18: the runs for a = 3.86 and 3.90 Å did not finish within the 4 h time limit and were
-  restarted; only their inputs are included. As stated in the PDF, Fig. 3 uses RI 3 / RS 14 for LiF.
 - Runs that are superseded or not used in the PDF: frozen-grid runs with a development build that ignored
   `RI_AO_RATIO` (they were repeated, see `rpa_gth-hf_frozen_grid/`; only the grid-size test in
   `rpa_gth-hf_frozen_grid_size_test/` is kept from that build, where the number of RI functions is therefore
