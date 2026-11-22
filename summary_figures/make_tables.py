@@ -11,7 +11,7 @@ RES = os.path.dirname(HERE)
 SOLIDS = ("Si", "C", "SiC", "BN", "MgO", "LiF")
 LIF_LI_AE = "LiF ae"
 LIF_LI_AE_NOTE = ("ae: Li all-electron (GAPW, def2-QZVP basis without its two most diffuse primitives) instead of "
-                  "Li GTH-HF-q3; used in the MAE.")
+                  "Li GTH-HF-q3.")
 KEY = {"C": "c", "SiC": "sic", "BN": "bn", "MgO": "mgo", "LiF": "lif"}
 
 # reference values, (a0 in A, B0 in GPa)
