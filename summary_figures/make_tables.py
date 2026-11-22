@@ -5,7 +5,7 @@ CP2K values: cc-pVQZ, k mesh 8x8x8; PBE with GTH-PBE, RPA with GTH-HF, RI 4, RS 
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-RES = f"{HERE}/data"
+RES = os.path.dirname(HERE)
 SOLIDS = ("Si", "C", "SiC", "BN", "MgO", "LiF")
 KEY = {"C": "c", "SiC": "sic", "BN": "bn", "MgO": "mgo", "LiF": "lif"}
 
@@ -19,22 +19,23 @@ PBE_ONCV = {"Si": (5.479, None), "C": (3.567, None), "BN": (3.621, None), "MgO":
 RPA_PAW = {"Si": (5.432, 99), "C": (3.572, 441), "SiC": (4.365, 223), "BN": (3.621, 378), "MgO": (4.225, 168),
            "LiF": (3.998, 76)}
 RPA_NCPAW = {"Si": (5.428, None), "C": (3.562, None), "SiC": (4.353, None), "MgO": (4.200, None), "LiF": (3.994, None)}
+RPA_GPAW = {"Si": (None, 95), "C": (None, 435), "SiC": (None, 220), "MgO": (None, 163), "LiF": (None, 71)}
 RPA_STDPAW = {"Si": (5.438, None), "C": (3.571, None), "SiC": (4.367, None), "MgO": (4.217, None), "LiF": (3.993, None)}
-REFERENCES = ("Tran2011", "Bosoni2024", "Pitts2025", "Harl2010", "Humer2026", "Klimes2015")  # numbering in tables.md
+REFERENCES = ("Tran2011", "Bosoni2024", "Pitts2025", "Harl2010", "Humer2026", "Klimes2015", "Patrick2015")  # numbering in tables.md
 RPA_ONCV = {"Si": (5.414, None), "C": (3.567, None), "BN": (3.617, None), "MgO": (4.200, None), "LiF": (3.996, None)}
 
 
 def cp2k_values():
     pbe, rpa = {"Si": (5.4615, 88.2)}, {}
-    for line in open(f"{RES}/pbe_gthpbe_c_sic_bn_mgo_lif/fits.txt"):
+    for line in open(f"{RES}/0045_pbe_gthpbe_c_sic_bn_mgo_lif/fits.txt"):
         if not line.startswith("#"):
             mat, val = line.split("|")
             pbe[mat.strip()] = tuple(float(v) for v in val.split()[:2])
-    for line in open(f"{RES}/eos_c_sic_bn_mgo_lif/fits.txt"):
+    for line in open(f"{RES}/0041_eos_gthhf_c_sic_bn_mgo_lif/fits.txt"):
         w = line.replace("|", " ").split()
         if w[:5][1:] == ["Q", "4", "18", "RPA"]:
             rpa[w[0]] = (float(w[5]), float(w[6]))
-    for line in open(f"{RES}/si_gthhf_frozen_grid/fits_matrix.txt"):
+    for line in open(f"{RES}/0041_si_gthhf_frozen_grid/fits_matrix.txt"):
         if line.startswith("Q 4 20"):
             w = line.split("|")[2].split()
             rpa["Si"] = (float(w[0]), float(w[1]))
@@ -62,7 +63,8 @@ def tables():
                 ("plane waves, PAW", PBE_PAW, ("Tran2011",)), ("plane waves, ONCV", PBE_ONCV, ("Pitts2025",)))
     rpa_rows = (("CP2K, GTH-HF, cc-pVQZ", rpa, ()), ("plane waves, PAW", RPA_PAW, ("Harl2010", "Humer2026")),
                 ("plane waves, norm-conserving PAW", RPA_NCPAW, ("Klimes2015",)),
-                ("plane waves, standard PAW", RPA_STDPAW, ("Klimes2015",)), ("plane waves, ONCV", RPA_ONCV, ("Pitts2025",)))
+                ("plane waves, standard PAW", RPA_STDPAW, ("Klimes2015",)), ("plane waves, ONCV", RPA_ONCV, ("Pitts2025",)),
+                ("plane waves, PAW (GPAW)", RPA_GPAW, ("Patrick2015",)))
     out = []
     for method, rows in (("PBE", pbe_rows), ("RPA", rpa_rows)):
         for column, quantity in ((0, "lattice constant"), (1, "bulk modulus")):
